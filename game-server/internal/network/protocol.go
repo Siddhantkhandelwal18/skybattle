@@ -15,6 +15,7 @@ const (
 	PacketInput       PacketType = 2
 	PacketPing        PacketType = 3
 	PacketRequestJoin PacketType = 4
+	PacketLobbyReady  PacketType = 5
 )
 
 type AuthPacket struct {
@@ -44,6 +45,7 @@ const (
 	PacketAuthAck    ServerPacketType = 11
 	PacketMatchInit  ServerPacketType = 12
 	PacketPong       ServerPacketType = 13
+	PacketLobbyState  ServerPacketType = 14
 )
 
 type WorldStatePacket struct {
@@ -64,4 +66,18 @@ type MatchInitPacket struct {
 	MapID    string      `msgpack:"map"`
 	TickRate int         `msgpack:"rate"`
 	Spawns   []game.Vec2 `msgpack:"spawns"`
+}
+
+type LobbyStatePacket struct {
+	MatchID  string            `msgpack:"mid"`
+	MapID    string            `msgpack:"map"`
+	Players  []LobbyPlayerData `msgpack:"players"`
+	AllReady bool              `msgpack:"allReady"`
+}
+
+type LobbyPlayerData struct {
+	ID    int    `msgpack:"id"`
+	Name  string `msgpack:"name"`
+	Ready bool   `msgpack:"ready"`
+	Team  int    `msgpack:"team"` // 0=RED, 1=BLUE for example
 }

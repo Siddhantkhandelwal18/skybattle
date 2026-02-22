@@ -47,6 +47,7 @@ type Room struct {
 	broadcastFunc func(roomID string, tick int, players []*game.Player, pickups []*game.Pickup, events []game.MatchEvent)
 
 	Bots []*game.BotController
+	TeamScores map[string]int
 
 	stopCh chan struct{}
 }
@@ -97,6 +98,7 @@ func NewRoom(gameMode, mapID string, tickRate int) *Room {
 		TimeLimitSec: 300, // 5 min default
 		KillLimit:    20,
 		NextPlayerID: 1,
+		TeamScores:   make(map[string]int),
 		stopCh:       make(chan struct{}),
 	}
 
@@ -133,8 +135,13 @@ func (r *Room) AddPlayer(userID, displayName string) (*game.Player, error) {
 	}
 
 	team := "RED"
-	if len(r.Players)%2 == 1 {
-		team = "BLUE"
+	if r.GameMode == "TDM" {
+		if len(r.Players)%2 == 1 {
+			team = "BLUE"
+		}
+	} else {
+		// FFA or other: everyone is on their own team or "NONE"
+		team = fmt.Sprintf("PLAYER_%d", r.NextPlayerID)
 	}
 
 	playerID := r.NextPlayerID
@@ -302,14 +309,25 @@ func (r *Room) tick(tick int, deltaTime float32) {
 					if shooter, ok := r.Players[proj.OwnerID]; ok {
 						shooter.Kills++
 						shooter.DamageDealt += damage
+						
+						// Update Team Score
+						r.TeamScores[shooter.Team]++
+
 						r.Events = append(r.Events, game.MatchEvent{
 							Tick: tick, Type: "KILL",
 							ActorID: proj.OwnerID, TargetID: p.ID,
 							WeaponID: proj.WeaponID, OccurredAt: now,
 						})
-						// Check kill limit
-						if shooter.Kills >= r.KillLimit {
-							r.State = StateFinished
+
+						// Check victory conditions
+						if r.GameMode == "TDM" {
+							if r.TeamScores[shooter.Team] >= r.KillLimit {
+								r.State = StateFinished
+							}
+						} else {
+							if shooter.Kills >= r.KillLimit {
+								r.State = StateFinished
+							}
 						}
 					}
 				}
