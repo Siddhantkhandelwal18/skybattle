@@ -48,10 +48,31 @@ namespace SkyBattle.UI
             int botCount = (int)BotCountSlider.value;
             string difficulty = DifficultyDropdown.options[DifficultyDropdown.value].text;
 
-            Debug.Log($"Starting Match: Map={selectedMap}, Bots={botCount}, Difficulty={difficulty}");
+            Debug.Log($"Starting Offline Match: Map={selectedMap}, Bots={botCount}, Difficulty={difficulty}");
             
-            // Logic to transition to Game Scene and notify LAN/Offline Manager (Phase 2)
+            // 1. Start the local server
+            StartCoroutine(LaunchLocalServerAndJoin());
+        }
+
+        private IEnumerator LaunchLocalServerAndJoin()
+        {
             UIManager.Instance.HideAllScreens();
+            // Show a simple loading indicator or message if available
+            
+            yield return StartCoroutine(ServerProcessManager.Instance.EnsureServerReadyAndStart());
+            
+            // 2. Connect to localhost
+            NetworkManager.Instance.Connect("127.0.0.1", 7001);
+
+            // 3. Request join (simplified auth for solo)
+            NetworkManager.Instance.SendPacket(SkyBattle.Networking.PacketType.RequestJoin, new { 
+                name = "SoloPlayer", 
+                mid = "", // First available room on local server
+                map = AvailableMaps[MapDropdown.value].MapID,
+                bots = (int)BotCountSlider.value
+            });
+
+            Debug.Log("Connected to local server for Solo Mode.");
         }
     }
 }
