@@ -10,7 +10,8 @@ namespace SkyBattle.Networking
         Auth = 1,
         Input = 2,
         Ping = 3,
-        RequestJoin = 4
+        RequestJoin = 4,
+        LobbyReady = 5
     }
 
     [Serializable]
@@ -44,7 +45,8 @@ namespace SkyBattle.Networking
         WorldState = 10,
         AuthAck = 11,
         MatchInit = 12,
-        Pong = 13
+        Pong = 13,
+        LobbyState = 14
     }
 
     [Serializable]
@@ -107,5 +109,23 @@ namespace SkyBattle.Networking
         public string map;
         public int rate;
         public Vector2[] spawns;
+    }
+
+    [Serializable]
+    public struct LobbyStatePacket
+    {
+        public string mid;
+        public string map;
+        public LobbyPlayerData[] players;
+        public bool allReady;
+    }
+
+    [Serializable]
+    public struct LobbyPlayerData
+    {
+        public int id;
+        public string name;
+        public bool ready;
+        public int team;
     }
 }

@@ -18,6 +18,8 @@ namespace SkyBattle.Networking
         public event Action<WorldStatePacket> OnWorldStateReceived;
         public event Action<AuthAckPacket> OnAuthAckReceived;
         public event Action<MatchInitPacket> OnMatchInitReceived;
+        public event Action<LobbyStatePacket> OnLobbyStateReceived;
+        public event Action OnConnectionFailed;
 
         private void Awake()
         {
@@ -34,13 +36,24 @@ namespace SkyBattle.Networking
 
         public void Connect()
         {
-            udpClient = new UdpClient();
-            serverEndPoint = new IPEndPoint(IPAddress.Parse(config.ServerIp), config.ServerPort);
-            
-            Debug.Log($"Connecting to Game Server at {config.ServerIp}:{config.ServerPort}");
-            
-            // Start listening thread or use async pattern
-            ReceivePackets();
+            Connect(config.ServerIp, config.ServerPort);
+        }
+
+        public void Connect(string ip, int port)
+        {
+            if (udpClient != null) udpClient.Close();
+
+            try {
+                udpClient = new UdpClient();
+                serverEndPoint = new IPEndPoint(IPAddress.Parse(ip), port);
+                
+                Debug.Log($"Connecting to Game Server at {ip}:{port}");
+                
+                ReceivePackets();
+            } catch (Exception e) {
+                Debug.LogError($"Failed to connect to {ip}:{port}: {e.Message}");
+                OnConnectionFailed?.Invoke();
+            }
         }
 
         private async void ReceivePackets()
@@ -85,6 +98,10 @@ namespace SkyBattle.Networking
                     var state = JsonUtility.FromJson<WorldStatePacket>(System.Text.Encoding.UTF8.GetString(payload));
                     OnWorldStateReceived?.Invoke(state);
                     break;
+                case ServerPacketType.LobbyState:
+                    var lobby = JsonUtility.FromJson<LobbyStatePacket>(System.Text.Encoding.UTF8.GetString(payload));
+                    OnLobbyStateReceived?.Invoke(lobby);
+                    break;
             }
         }
 
@@ -101,9 +118,16 @@ namespace SkyBattle.Networking
             udpClient.SendAsync(data, data.Length, serverEndPoint);
         }
 
-        private void OnDestroy()
+        public void Disconnect()
         {
             udpClient?.Close();
+            udpClient = null;
+            Debug.Log("Disconnected from Game Server.");
+        }
+
+        private void OnDestroy()
+        {
+            Disconnect();
         }
     }
 }

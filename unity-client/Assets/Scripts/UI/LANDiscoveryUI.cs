@@ -81,10 +81,17 @@ namespace SkyBattle.UI
         private void JoinServer(LANServerData server)
         {
             Debug.Log($"Joining LAN Server: {server.IPAddress}:{server.Port}");
-            // Integration with NetworkClient to connect to this IP/Port
+            
             LANDiscovery.Instance.StopDiscovery();
-            UIManager.Instance.HideAllScreens();
-            // Start game loading logic...
+            
+            // Connect to host
+            NetworkManager.Instance.Connect(server.IPAddress, server.Port);
+            
+            // Send Join Request (Simplified for Phase 1/2)
+            NetworkManager.Instance.SendPacket(PacketType.RequestJoin, new { name = "Player_" + UnityEngine.Random.Range(100, 999) });
+
+            // Transition to Lobby
+            UIManager.Instance.ShowScreen("Lobby");
         }
     }
 }
