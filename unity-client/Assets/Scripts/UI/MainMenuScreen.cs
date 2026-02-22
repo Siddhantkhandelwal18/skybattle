@@ -7,6 +7,7 @@ namespace SkyBattle.UI
     {
         [Header("Buttons")]
         public Button PlayButton;
+        public Button LANButton;
         public Button OfflineButton;
         public Button SettingsButton;
         public Button QuitButton;
@@ -14,6 +15,7 @@ namespace SkyBattle.UI
         private void Start()
         {
             PlayButton?.onClick.AddListener(() => OnPlayClicked());
+            LANButton?.onClick.AddListener(() => OnLANClicked());
             OfflineButton?.onClick.AddListener(() => OnOfflineClicked());
             SettingsButton?.onClick.AddListener(() => OnSettingsClicked());
             QuitButton?.onClick.AddListener(() => Application.Quit());
@@ -23,6 +25,11 @@ namespace SkyBattle.UI
         {
             Debug.Log("Online Play triggered.");
             // Phase 3 implementation
+        }
+
+        private void OnLANClicked()
+        {
+            UIManager.Instance.ShowScreen("LANDiscovery");
         }
 
         private void OnOfflineClicked()
