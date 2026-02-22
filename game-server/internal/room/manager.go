@@ -68,6 +68,23 @@ var outpostPickups = []game.Pickup{
 	{ID: 8, Type: game.PickupWeapon, WeaponID: game.WeaponLaserGun,       Position: game.Vec2{X: 21, Y: 6}, IsActive: true},
 }
 
+// Catacombs map — spawns and pickups
+var catacombsSpawns = []game.Vec2{
+	{X: 2, Y: 2}, {X: 28, Y: 2}, {X: 15, Y: 5}, {X: 5, Y: 10}, {X: 25, Y: 10},
+	{X: 10, Y: 15}, {X: 20, Y: 15}, {X: 2, Y: 20}, {X: 28, Y: 20}, {X: 15, Y: 25},
+}
+
+var catacombsPickups = []game.Pickup{
+	{ID: 101, Type: game.PickupWeapon, WeaponID: game.WeaponRocketLauncher, Position: game.Vec2{X: 15, Y: 15}, IsActive: true},
+	{ID: 102, Type: game.PickupWeapon, WeaponID: game.WeaponSniperRifle,    Position: game.Vec2{X: 2, Y: 25}, IsActive: true},
+	{ID: 103, Type: game.PickupWeapon, WeaponID: game.WeaponShotgun,        Position: game.Vec2{X: 28, Y: 25}, IsActive: true},
+	{ID: 104, Type: game.PickupHealth, Position: game.Vec2{X: 15, Y: 2}, HealAmount: 50, IsActive: true},
+	{ID: 105, Type: game.PickupHealth, Position: game.Vec2{X: 5, Y: 18}, HealAmount: 50, IsActive: true},
+	{ID: 106, Type: game.PickupHealth, Position: game.Vec2{X: 25, Y: 18}, HealAmount: 50, IsActive: true},
+	{ID: 107, Type: game.PickupWeapon, WeaponID: game.WeaponLaserGun,       Position: game.Vec2{X: 8, Y: 8}, IsActive: true},
+	{ID: 108, Type: game.PickupWeapon, WeaponID: game.WeaponFlamethrower,   Position: game.Vec2{X: 22, Y: 8}, IsActive: true},
+}
+
 func NewRoom(gameMode, mapID string, tickRate int) *Room {
 	r := &Room{
 		ID:           uuid.New().String(),
@@ -89,6 +106,12 @@ func NewRoom(gameMode, mapID string, tickRate int) *Room {
 		r.SpawnPoints = outpostSpawns
 		for i := range outpostPickups {
 			p := outpostPickups[i]
+			r.Pickups = append(r.Pickups, &p)
+		}
+	case "catacombs":
+		r.SpawnPoints = catacombsSpawns
+		for i := range catacombsPickups {
+			p := catacombsPickups[i]
 			r.Pickups = append(r.Pickups, &p)
 		}
 	default:
