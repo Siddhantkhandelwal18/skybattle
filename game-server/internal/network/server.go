@@ -178,7 +178,7 @@ func (s *Server) handleInput(addr *net.UDPAddr, payload []byte) {
 	}
 
 	// Update player state in room (authoritative logic)
-	r.HandlePlayerInput(session.PlayerID, room.PlayerInput{
+	r.HandlePlayerInput(session.PlayerID, game.PlayerInput{
 		Horizontal: p.Horizontal,
 		Vertical:   p.Vertical,
 		AimAngle:   p.AimAngleDeg,

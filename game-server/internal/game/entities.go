@@ -163,6 +163,16 @@ func (p *Player) UpdateFuel(deltaTime float32) {
 	}
 }
 
+type PlayerInput struct {
+	Horizontal float32 `msgpack:"h"`
+	Vertical   float32 `msgpack:"v"`
+	AimAngle   float32 `msgpack:"aim"`
+	IsFlying   bool    `msgpack:"fly"`
+	Firing     bool    `msgpack:"fire"`
+	WeaponID   uint8   `msgpack:"wpn"`
+	Sequence   uint32  `msgpack:"seq"`
+}
+
 func (p *Player) Lock()   { p.mu.Lock() }
 func (p *Player) Unlock() { p.mu.Unlock() }
 

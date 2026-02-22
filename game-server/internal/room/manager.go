@@ -46,6 +46,8 @@ type Room struct {
 
 	broadcastFunc func(roomID string, tick int, players []*game.Player, pickups []*game.Pickup, events []game.MatchEvent)
 
+	Bots []*game.BotController
+
 	stopCh chan struct{}
 }
 
@@ -130,8 +132,27 @@ func (r *Room) RemovePlayer(playerID int) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	delete(r.Players, playerID)
+	// Also remove from bots if it was a bot
+	for i, b := range r.Bots {
+		if b.Player.ID == playerID {
+			r.Bots = append(r.Bots[:i], r.Bots[i+1:]...)
+			break
+		}
+	}
 	if len(r.Players) == 0 && r.State == StateInProgress {
 		r.State = StateFinished
+	}
+}
+
+func (r *Room) SpawnBots(count int) {
+	for i := 0; i < count; i++ {
+		name := fmt.Sprintf("Bot_%d", i+1)
+		p, err := r.AddPlayer("bot_uid", name)
+		if err == nil {
+			r.mu.Lock()
+			r.Bots = append(r.Bots, game.NewBotController(p, 0.5+rand.Float32()*0.5))
+			r.mu.Unlock()
+		}
 	}
 }
 
@@ -171,6 +192,17 @@ func (r *Room) Start() {
 }
 
 func (r *Room) tick(tick int, deltaTime float32) {
+	r.mu.Lock()
+	
+	// Process Bot updates first to generate inputs
+	for _, b := range r.Bots {
+		input := b.Update(deltaTime, r.Players)
+		// Internal call to HandlePlayerInput
+		r.processPlayerInput(b.Player.ID, input)
+	}
+
+	r.mu.Unlock()
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -301,20 +333,14 @@ func (r *Room) safeSpawnPoint(player *game.Player) game.Vec2 {
 	return bestSpawn
 }
 
-type PlayerInput struct {
-	Horizontal  float32
-	Vertical    float32
-	AimAngle    float32
-	IsFlying    bool
-	Firing      bool
-	WeaponID    uint8
-	Sequence    uint32
+func (r *Room) HandlePlayerInput(playerID int, input game.PlayerInput) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.processPlayerInput(playerID, input)
 }
 
-func (r *Room) HandlePlayerInput(playerID int, input PlayerInput) {
-	r.mu.Lock()
+func (r *Room) processPlayerInput(playerID int, input game.PlayerInput) {
 	p, ok := r.Players[playerID]
-	r.mu.Unlock()
 
 	if !ok || !p.IsAlive {
 		return
